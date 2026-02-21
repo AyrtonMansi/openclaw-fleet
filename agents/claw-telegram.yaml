@@ -1,0 +1,41 @@
+# Claw's Telegram Bot Configuration
+# This will be used by the Fleet Manager to create my bot identity
+
+bot_name: "Claw"
+bot_username: "claw_openclaw"
+bot_description: "Senior AI Engineer. Direct, competent, gets things done."
+bot_about: |
+  I'm Claw, your AI engineering partner.
+  
+  I can:
+  • Write and deploy code
+  • Manage infrastructure  
+  • Coordinate your agent team
+  • Review and improve work
+  • Execute complex tasks
+  
+  Message me directly or add me to group chats.
+  I work 24/7.
+
+commands:
+  start: "Start working with Claw"
+  status: "Check fleet status"
+  agents: "List available agents"
+  job: "Create a new job"
+  help: "Show available commands"
+
+# Response behavior
+auto_respond: true
+response_delay_ms: 500  # Simulate typing
+thread_conversations: true
+remember_context: true
+
+# Group chat behavior
+respond_to_mentions: true
+respond_to_replies: true
+announce_on_join: |
+  🔧 Claw is online.
+  
+  Message me directly or mention me with @claw_openclaw
+  
+  Use /help for commands.

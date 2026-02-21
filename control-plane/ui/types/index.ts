@@ -16,6 +16,8 @@ export interface Machine {
   last_seen: string;
   status: 'online' | 'offline' | 'degraded';
   agent_count?: number;
+  ip_address?: string;
+  location?: string;
 }
 
 export interface Agent {
@@ -31,6 +33,11 @@ export interface Agent {
   last_error?: string;
   updated_at: string;
   machine_hostname?: string;
+  total_jobs_completed?: number;
+  total_tokens_used?: number;
+  avg_response_time_ms?: number;
+  is_project_manager?: boolean;
+  managed_agents?: string[];
 }
 
 export interface Job {
@@ -49,6 +56,9 @@ export interface Job {
   max_retries: number;
   created_at: string;
   updated_at: string;
+  estimated_tokens?: number;
+  actual_tokens?: number;
+  cost_estimate?: number;
 }
 
 export interface Run {
@@ -62,6 +72,8 @@ export interface Run {
   agent_name?: string;
   job_title?: string;
   duration_ms?: number;
+  tokens_used?: number;
+  cost_usd?: number;
 }
 
 export interface RunDetail extends Run {
@@ -109,4 +121,26 @@ export interface AuditLog {
   details: Record<string, any>;
   created_at: string;
   ip_address?: string;
+}
+
+export interface FleetStats {
+  total_machines: number;
+  online_machines: number;
+  total_agents: number;
+  idle_agents: number;
+  busy_agents: number;
+  total_jobs_today: number;
+  total_tokens_today: number;
+  total_cost_today: number;
+  avg_job_duration_ms: number;
+}
+
+export interface DropletTemplate {
+  id: string;
+  name: string;
+  size: string;
+  region: string;
+  image: string;
+  tags: string[];
+  count: number;
 }

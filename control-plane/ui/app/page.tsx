@@ -1,32 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { jobs, fleet } from '@/lib/api';
-import { Job, Run, Machine, Agent } from '@/types';
+import { Job, Run, Machine, Agent, FleetStats } from '@/types';
 import DashboardLayout from './dashboard';
-import { StatCard } from '@/components/StatCard';
+import { DashboardStats } from '@/components/DashboardStats';
+import { TokenBudgetMonitor } from '@/components/TokenBudgetMonitor';
+import { ConnectionMonitor } from '@/components/ConnectionMonitor';
+import { JobCreator } from '@/components/JobCreator';
 import { AgentCard } from '@/components/AgentCard';
+import { DropletProvisioner } from '@/components/DropletProvisioner';
+import { ProjectManagerAgent } from '@/components/ProjectManagerAgent';
 import { 
   Play, 
   CheckCircle, 
   XCircle, 
-  Clock, 
-  Server, 
-  Bot,
-  ArrowRight,
-  Activity
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
-  const [recentRuns, setRecentRuns] = useState<Run[]>([]);
   const [machines, setMachines] = useState<Machine[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
+    const interval = setInterval(loadData, 10000); // Refresh every 10s
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -39,16 +41,6 @@ export default function DashboardPage() {
       setRecentJobs(jobsRes.data.items || []);
       setMachines(machinesRes.data);
       setAgents(agentsRes.data);
-      
-      // Load recent runs from first few jobs
-      if (jobsRes.data.items?.length > 0) {
-        const runsPromises = jobsRes.data.items.slice(0, 3).map((job: Job) => 
-          jobs.runs(job.id).catch(() => ({ data: [] }))
-        );
-        const runsResults = await Promise.all(runsPromises);
-        const allRuns = runsResults.flatMap(r => r.data).slice(0, 5);
-        setRecentRuns(allRuns);
-      }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -56,14 +48,37 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCreateJob = async (jobData: any) => {
+    try {
+      await jobs.create(jobData);
+      loadData();
+    } catch (err) {
+      alert('Failed to create job');
+    }
+  };
+
+  // Calculate stats
+  const stats: FleetStats = {
+    total_machines: machines.length,
+    online_machines: machines.filter(m => m.status === 'online').length,
+    total_agents: agents.length,
+    idle_agents: agents.filter(a => a.status === 'idle').length,
+    busy_agents: agents.filter(a => a.status === 'busy').length,
+    total_jobs_today: recentJobs.length,
+    total_tokens_today: recentJobs.reduce((acc, j) => acc + (j.actual_tokens || 0), 0),
+    total_cost_today: recentJobs.reduce((acc, j) => acc + (j.cost_estimate || 0), 0),
+    avg_job_duration_ms: 0,
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'succeeded':
         return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+      case 'running':
+      case 'leased':
+        return <Play className="w-4 h-4 text-blue-500" />;
       case 'failed':
         return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'running':
-        return <Activity className="w-4 h-4 text-blue-500 animate-pulse" />;
       default:
         return <Clock className="w-4 h-4 text-gray-400" />;
     }
@@ -73,22 +88,16 @@ export default function DashboardPage() {
     switch (status) {
       case 'succeeded':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'failed':
-        return 'bg-red-50 text-red-700 border-red-200';
       case 'running':
         return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'failed':
+        return 'bg-red-50 text-red-700 border-red-200';
       default:
-        return 'bg-gray-50 text-gray-600 border-gray-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
     }
   };
 
-  // Calculate stats
-  const runningJobs = recentJobs.filter(j => j.status === 'running').length;
-  const queuedJobs = recentJobs.filter(j => j.status === 'queued').length;
-  const onlineMachines = machines.filter(m => m.status === 'online').length;
-  const idleAgents = agents.filter(a => a.status === 'idle').length;
-
-  if (loading) {
+  if (loading && machines.length === 0) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -103,147 +112,86 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Fleet Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Overview of your OpenClaw Fleet
+            Monitor your OpenClaw agents, jobs, and infrastructure
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Running Jobs"
-            value={runningJobs}
-            subtitle="Currently active"
-            icon={Play}
-            color="blue"
-          />
-          <StatCard
-            title="Queued Jobs"
-            value={queuedJobs}
-            subtitle="Waiting for agents"
-            icon={Clock}
-            color="amber"
-          />
-          <StatCard
-            title="Online Machines"
-            value={onlineMachines}
-            subtitle={`of ${machines.length} total`}
-            icon={Server}
-            color="green"
-          />
-          <StatCard
-            title="Idle Agents"
-            value={idleAgents}
-            subtitle="Ready for work"
-            icon={Bot}
-            color="green"
-          />
-        </div>
+        {/* Stats */}
+        <DashboardStats stats={stats} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Jobs */}
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Jobs</h2>
-              <Link 
-                href="/jobs" 
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-              >
-                View all <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {recentJobs.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No jobs yet. Create your first job to get started.
-                </div>
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <JobCreator onSubmit={handleCreateJob} />
+            <ConnectionMonitor machines={machines} />
+          </div>
+
+          {/* Middle Column */}
+          <div className="space-y-6">
+            <TokenBudgetMonitor 
+              currentDailyUsage={stats.total_cost_today}
+              currentMonthlyUsage={stats.total_cost_today * 30}
+            />
+            <DropletProvisioner />
+            <ProjectManagerAgent agents={agents} />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Active Agents */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="font-semibold text-gray-900 mb-4">Active Agents</h3>
+              {agents.filter(a => a.status === 'busy').length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No agents currently busy
+                </p>
               ) : (
-                recentJobs.map((job) => (
-                  <div key={job.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{job.title}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Priority: {job.priority} • Retries: {job.retries}/{job.max_retries}
-                        </p>
+                <div className="space-y-3">
+                  {agents
+                    .filter(a => a.status === 'busy')
+                    .map((agent) => (
+                      <AgentCard key={agent.id} agent={agent} />
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recent Jobs */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="font-semibold text-gray-900 mb-4">Recent Jobs</h3>
+              <div className="space-y-2">
+                {recentJobs.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No jobs yet
+                  </p>
+                ) : (
+                  recentJobs.slice(0, 5).map((job) => (
+                    <div
+                      key={job.id}
+                      className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(job.status)}
+                        <div>
+                          <p className="font-medium text-sm">{job.title}</p>
+                          <p className="text-xs text-gray-500">
+                            Priority: {job.priority}
+                          </p>
+                        </div>
                       </div>
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusClass(job.status)}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs border ${getStatusClass(job.status)}`}>
                         {job.status}
                       </span>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Recent Runs */}
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Runs</h2>
-              <Link 
-                href="/jobs" 
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-              >
-                View all <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {recentRuns.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No runs yet. Jobs will appear here when they execute.
-                </div>
-              ) : (
-                recentRuns.map((run) => (
-                  <Link 
-                    key={run.id} 
-                    href={`/runs/${run.id}`}
-                    className="block p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{run.job_title || 'Untitled Job'}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Agent: {run.agent_name || 'Unknown'}
-                          {run.duration_ms && ` • ${(run.duration_ms / 1000).toFixed(1)}s`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(run.status)}
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusClass(run.status)}`}>
-                          {run.status}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Active Agents */}
-        {agents.filter(a => a.status === 'busy').length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Active Agents</h2>
-              <Link 
-                href="/fleet" 
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-              >
-                View fleet <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {agents
-                .filter(a => a.status === 'busy')
-                .map((agent) => (
-                  <AgentCard key={agent.id} agent={agent} />
-                ))}
-            </div>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

@@ -121,6 +121,7 @@ class RunnerToken(Base):
     id = Column(String(36), primary_key=True)
     machine_id = Column(String(36), ForeignKey("machines.id"), nullable=True)
     token_hash = Column(Text, nullable=False, unique=True)
+    description = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     revoked_at = Column(DateTime(timezone=True), nullable=True)
     created_by = Column(String(36), ForeignKey("users.id"), nullable=False)

@@ -1,0 +1,45 @@
+# OpenClaw Fleet Runner Configuration
+
+# Control plane URL
+control_plane_url: https://fleet.example.com
+
+# Runner token (create this in the Fleet UI Settings page)
+runner_token: your-runner-token-here
+
+# Heartbeat interval in seconds
+heartbeat_interval: 30
+
+# Optional labels for this machine
+labels:
+  environment: production
+  region: us-east
+  gpu: "true"
+
+# Agent definitions
+agents:
+  - name: default-agent
+    model: gpt-4
+    tags:
+      - general
+      - fast
+    tools:
+      - shell
+      - file
+    max_concurrency: 2
+    workspace_path: /tmp/openclaw-workspace/default
+    env_vars:
+      OPENCLAW_TIMEOUT: "300"
+
+  - name: heavy-agent
+    model: claude-3-opus
+    tags:
+      - heavy
+      - reasoning
+    tools:
+      - shell
+      - file
+      - docker
+    max_concurrency: 1
+    workspace_path: /tmp/openclaw-workspace/heavy
+    env_vars:
+      OPENCLAW_TIMEOUT: "600"

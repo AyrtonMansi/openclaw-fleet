@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/api';
 import { User } from '@/types';
-import { LayoutDashboard, Server, Play, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Server, Play, Settings, LogOut, Users } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -51,6 +51,7 @@ export default function DashboardLayout({
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/fleet', label: 'Fleet', icon: Server },
     { href: '/jobs', label: 'Jobs', icon: Play },
+    { href: '/team', label: 'Team', icon: Users },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
 

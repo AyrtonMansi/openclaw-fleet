@@ -68,6 +68,7 @@ export interface Run {
   status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
   started_at?: string;
   finished_at?: string;
+  created_at?: string;
   summary: Record<string, any>;
   agent_name?: string;
   job_title?: string;

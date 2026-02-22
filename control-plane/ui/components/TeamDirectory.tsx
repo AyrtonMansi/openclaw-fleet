@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageCircle, Users, Crown, Briefcase, Clock } from 'lucide-react';
+import { MessageCircle, Users, Crown, Briefcase, Clock, Pencil } from 'lucide-react';
 import { TeamAgent } from '@/types/team';
 
 interface TeamDirectoryProps {
   agents: TeamAgent[];
   onMessageAgent?: (agentId: string) => void;
+  onEditAgent?: (agent: TeamAgent) => void;
 }
 
-export function TeamDirectory({ agents, onMessageAgent }: TeamDirectoryProps) {
+export function TeamDirectory({ agents, onMessageAgent, onEditAgent }: TeamDirectoryProps) {
   const [filter, setFilter] = useState<'all' | 'online' | 'managers'>('all');
   const [selectedAgent, setSelectedAgent] = useState<TeamAgent | null>(null);
 
@@ -77,17 +78,31 @@ export function TeamDirectory({ agents, onMessageAgent }: TeamDirectoryProps) {
                       <p className="text-xs text-indigo-600 mt-1">{manager.status_message}</p>
                     )}
                   </div>
-                  {manager.telegram?.bot_username && (
-                    <a
-                      href={`https://t.me/${manager.telegram.bot_username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
-                      title="Message on Telegram"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </a>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {onEditAgent && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditAgent(manager);
+                        }}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Edit agent"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                    {manager.telegram?.bot_username && (
+                      <a
+                        href={`https://t.me/${manager.telegram.bot_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                        title="Message on Telegram"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {/* Team members */}
@@ -155,17 +170,31 @@ export function TeamDirectory({ agents, onMessageAgent }: TeamDirectoryProps) {
                       </p>
                     )}
                   </div>
-                  {agent.telegram?.bot_username && (
-                    <a
-                      href={`https://t.me/${agent.telegram.bot_username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-1.5 text-blue-500 hover:bg-blue-50 rounded"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </a>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {onEditAgent && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditAgent(agent);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                        title="Edit agent"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                    {agent.telegram?.bot_username && (
+                      <a
+                        href={`https://t.me/${agent.telegram.bot_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 text-blue-500 hover:bg-blue-50 rounded"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

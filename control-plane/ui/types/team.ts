@@ -39,18 +39,37 @@ export interface AgentMemory {
   }>;
 }
 
-export interface TeamAgent extends Agent {
-  personality: AgentPersonality;
-  telegram: AgentTelegramConfig;
-  memory: AgentMemory;
-  reports_to?: string; // Agent ID of project manager
-  manages?: string[]; // Agent IDs this agent manages
+export interface TeamAgent {
+  // Base Agent fields
+  id: string;
+  machine_id: string;
+  name: string;
+  model: string;
+  tags: string[];
+  tools: string[];
+  max_concurrency: number;
+  status: 'idle' | 'busy' | 'error' | 'offline';
+  current_run_id?: string;
+  last_error?: string;
+  updated_at: string;
+  machine_hostname?: string;
+  total_jobs_completed?: number;
+  total_tokens_used?: number;
+  avg_response_time_ms?: number;
+  is_project_manager?: boolean;
+  managed_agents?: string[];
+  // Team-specific fields
+  personality?: AgentPersonality;
+  telegram?: AgentTelegramConfig;
+  memory?: AgentMemory;
+  reports_to?: string;
+  manages?: string[];
   work_hours?: {
     timezone: string;
-    start: string; // HH:mm
+    start: string;
     end: string;
   };
-  status_message?: string; // Custom status like "Working on API refactor"
+  status_message?: string;
   current_task?: {
     description: string;
     started_at: string;

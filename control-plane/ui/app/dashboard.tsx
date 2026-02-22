@@ -5,9 +5,19 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/api';
 import { User } from '@/types';
-import { LayoutDashboard, Server, Play, Settings, LogOut, Users } from 'lucide-react';
+import { ThemeProvider } from '@/lib/theme';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { 
+  LayoutDashboard, 
+  Server, 
+  Play, 
+  Zap,
+  Settings, 
+  LogOut, 
+  Users 
+} from 'lucide-react';
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -39,8 +49,8 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
       </div>
     );
   }
@@ -51,16 +61,17 @@ export default function DashboardLayout({
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/fleet', label: 'Fleet', icon: Server },
     { href: '/jobs', label: 'Jobs', icon: Play },
+    { href: '/runs', label: 'Runs', icon: Zap },
     { href: '/team', label: 'Team', icon: Users },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200">
-        <div className="flex items-center justify-center h-16 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">OpenClaw Fleet</h1>
+      <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">OpenClaw Fleet</h1>
         </div>
 
         <nav className="mt-5 px-2">
@@ -68,25 +79,28 @@ export default function DashboardLayout({
             <Link
               key={item.href}
               href={item.href}
-              className="group flex items-center px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
+              className="group flex items-center px-2 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
-              <item.icon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+              <item.icon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300" />
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 w-full border-t border-gray-200 p-4">
+        <div className="absolute bottom-0 w-full border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center mb-3">
+            <ThemeToggle />
+          </div>
           <div className="flex items-center">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {user.email}
               </p>
-              <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="ml-4 p-2 text-gray-400 hover:text-gray-500"
+              className="ml-4 p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -99,5 +113,17 @@ export default function DashboardLayout({
         <main className="p-8">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ThemeProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </ThemeProvider>
   );
 }

@@ -9,7 +9,7 @@ interface StatCardProps {
     value: number;
     label: string;
   };
-  color?: 'blue' | 'green' | 'amber' | 'red' | 'gray';
+  color?: 'blue' | 'green' | 'amber' | 'red' | 'gray' | 'indigo' | 'purple';
 }
 
 export function StatCard({ title, value, subtitle, icon: Icon, trend, color = 'blue' }: StatCardProps) {
@@ -19,6 +19,8 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, color = 'b
     amber: 'bg-amber-50 text-amber-600',
     red: 'bg-red-50 text-red-600',
     gray: 'bg-gray-100 text-gray-600',
+    indigo: 'bg-indigo-50 text-indigo-600',
+    purple: 'bg-purple-50 text-purple-600',
   };
 
   return (
